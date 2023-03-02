@@ -1,0 +1,2 @@
+cv::Mat B;
+cv::Mat A = B;属于浅拷贝，图片A的data是一个指针指向图片B的data区域，若图片B内存释放了，再去访问A的data会出错。

@@ -1,0 +1,3 @@
+ros订阅话题时，创建节点句柄后立即订阅一次话题会不成功，因为节点句柄创建需要时间，可以在回调函数添加标志位判断是否进入回调函数，或者创建节点句柄后延时0.5s。
+
+多重vector容器的初始化大小及初始值vec.resize(n, std::vector<std::vector<double>>(n1, std::vector<double>(n2, 0)));

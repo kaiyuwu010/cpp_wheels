@@ -1,0 +1,75 @@
+1、ros订阅话题时，创建节点句柄后立即订阅一次话题会不成功，因为节点句柄创建需要时间，可以在回调函数添加标志位判断是否进入回调函数，或者创建节点句柄后延时0.5s。
+
+2、类里面声明的节点句柄需要初始化。
+
+3、ros编译了指定功能包后再编译全部功能包，需要使用命令catkin_make -DCATKIN_WHITELIST_PACKAGES="" ，双引号内为空。
+
+4、当ros消息包含数组类型时，在对消息进行赋值时，需要用大括号一次性赋值，不能用[]逐个赋值。
+
+5、cmakelist.txt文件中的catkin_package项里面的 INCLUDE_DIRS include启用后，别的功能包才能找到这个功能包的头文件位置, LIBRARIES也要加上add_library里面编译的库文件，不然会报错undefined reference。
+
+6、多线程中ROS_INFO()可能会引起错误:boost: mutex lock failed in pthread_mutex_lock: Invalid argument
+
+7、注意python环境不对的话（特别是使用conda的时候），启动gazebo和moveit会出错。
+
+8、ros节点包括一个主线程和若干回调线程(回调线程需要函数开启)，使用ros::spin()或ros::spinOnce()可以开启一个回调线程。也可以使用ros::AsyncSpinner(n)函数指定多个线程，然后使用spinner->start()开启回调线程。
+
+9、绑定自定义的回调队列ros::CallbackQueue my_queue时，nh_.setCallbackQueue(&my_queue)函数应该在sub = nh_.subscribe<>()函数之前执行，否则该回调函数的回调队列会绑定在默认回调队列上。
+
+ros内置标准消息与c++和python消息类型对照
+Primitive Type	          Serialization	            C++	Python2 / Python3
+bool	               unsigned 8-bit int	        uint8_t	bool                                        
+int8	                signed 8-bit int	         int8_t	int                                                    
+uint8	               unsigned 8-bit int	        uint8_t	int
+int16	                signed 16-bit int	        int16_t	int
+uint16	               unsigned 16-bit int	         uint16_t	int
+int32	                signed 32-bit int	        int32_t	int
+uint32                 unsigned 32-bit int         	uint32_t	int
+int64	                signed 64-bit int	        int64_t	long int
+uint64	               unsigned 64-bit int       	uint64_t	long int
+float32	        32-bit IEEE float	          float	float
+float64	        64-bit IEEE float	         double	float
+string	                  ascii string	        std::string	str bytes
+time	          secs/nsecs unsigned 32-bit ints	ros::Time	rospy.Time
+duration	  secs/nsecs signed 32-bit ints	ros::Duration	rospy.Duration
+
+有自定义服务消息时：
+使用其他功能包自定义的消息，需要在cmakelist.txt里的find_package增加相应的功能包名。
+在功能包下面创建srv文件夹，文件夹下面创建服务消息文件 - 服务消息名.srv
+package.xml文件需要增加语句：<build_depend>message_generation</build_depend>，<run_depend>message_runtime</run_depend>
+cmakelists.txt文件需要增加语句：find_package(catkin REQUIRED COMPONENTS --- std_msgs message_generation)
+				add_service_files(
+				  FILES
+				  ---.srv
+				)
+				generate_messages(
+				   DEPENDENCIES
+				   std_msgs
+				)
+使用服务消息时，在头文件增加语句：#include “包名/服务消息名.h”
+定义服务端：  ros::ServiceServer service = n.advertiseService("服务名", callbackFunction);
+在类内定义服务端时：  ros::ServiceServer service = n.advertiseService("服务名", &类名::callbackFunction, this);
+服务回调函数：  bool callbackFunction(包名::服务消息名::Request &req, 包名::服务消息名::Response &res){}
+定义客户端：  ros::ServiceClient client = n.serviceClient<包名::服务消息名>("服务名");
+请求服务：   包名::服务消息名 srv; srv.request.--- = ---; client.call(srv);
+
+
+有自定义话题消息时：
+在功能包下面创建msg文件夹，文件夹下面创建话题消息文件 - 话题消息名.msg
+package.xml文件需要增加语句：<build_depend>message_generation</build_depend>，<run_depend>message_runtime</run_depend>
+cmakelists.txt文件需要增加语句：find_package(catkin REQUIRED COMPONENTS --- std_msgs message_generation)
+				add_message_files(
+				  FILES
+				  ---.msg
+				)
+				generate_messages(
+				   DEPENDENCIES
+				   std_msgs
+				)
+使用话题消息时，在头文件增加语句：#include “包名/话题消息名.h”
+定义发布者：  ros::Publisher  pub = n.advertise<包名::话题消息名>("话题名", 10);
+定义订阅者：  ros::Subscriber sub = n.subscribe<包名::话题消息名>("话题名", 10, callbackFunction); 消息类型<包名::话题消息名>可以不加
+话题回调函数：  void callbackFunction(const 包名::话题消息名& msg);
+在类内定义回调函数和订阅者时：  ros::Subscriber sub = n.subscribe<包名::话题消息名>("话题名", 10, &类名::callbackFunction, this); 消息类型<包名::话题消息名>可以不加
+在类内定义话题回调函数：  void 类名::callbackFunction(const 包名::话题消息名& msg);
+
