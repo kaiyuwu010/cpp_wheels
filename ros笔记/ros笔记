@@ -16,6 +16,8 @@
 
 9、绑定自定义的回调队列ros::CallbackQueue my_queue时，nh_.setCallbackQueue(&my_queue)函数应该在sub = nh_.subscribe<>()函数之前执行，否则该回调函数的回调队列会绑定在默认回调队列上。
 
+10、回调函数有严格的定义规定：参数只能有一个且必须以const修饰、参数类型为xxxConstPtr、参数为引用传递、函数没有返回值。
+
 ros内置标准消息与c++和python消息类型对照
 Primitive Type	          Serialization	            C++	Python2 / Python3
 bool	               unsigned 8-bit int	        uint8_t	bool                                        
